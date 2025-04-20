@@ -16,7 +16,7 @@
   - name: Create a virtual network
     azure_rm_virtualnetwork:
       name: firstnetwork
-      resource_group: "{{ resourcegroup_name }}"
+      resource_group: "{{ 1-b3c32a4e-playground-sandbox }}"
       address_prefixes_cidr:
           - "10.1.0.0/16"
           - "172.100.0.0/16"
@@ -31,13 +31,13 @@
     azure_rm_subnet:
       name: firstsubnet
       virtual_network_name: firstnetwork
-      resource_group: "{{ resourcegroup_name }}"
+      resource_group: "{{ 1-b3c32a4e-playground-sandbox }}"
       address_prefix_cidr: "10.1.0.0/24"
       state: present
   
   - name: setup first jumphost
     azure_rm_virtualmachine:
-      resource_group: "{{ resourcegroup_name }}"
+      resource_group: "{{ 1-b3c32a4e-playground-sandbox }}"
       name: jumphost
       vm_size: Standard_A2
       admin_username: ansible
