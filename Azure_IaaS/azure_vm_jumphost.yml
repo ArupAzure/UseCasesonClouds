@@ -22,7 +22,8 @@
       azure_rm_virtualnetwork:
         name: "jumphostVNet"
         resource_group: "{{ resource_group }}"
-        address_prefixes: "10.0.0.0/16"
+        address_prefixes:
+          - "10.0.0.0/16"
         location: "{{ location }}"
 
     - name: Create subnet
