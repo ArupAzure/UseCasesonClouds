@@ -2,17 +2,12 @@
 - name: Create Azure Public IP
   hosts: localhost
   connection: local
-  gather_facts: false
-
-  vars:
-    resource_group: "1-b3c32a4e-playground-sandbox"
-    location: "eastus"
-    public_ip_name: "jumphostPublicIP"
+  gather_facts: no
 
   tasks:
-    - name: Create public IP address
+    - name: Create Public IP address
       azure_rm_publicipaddress:
-        name: "{{ public_ip_name }}"
-        resource_group: "{{ resource_group }}"
-        allocation_method: "Dynamic"
-        location: "{{ location }}"
+        resource_group: 1-b3c32a4e-playground-sandbox
+        name: arupPublicIP
+        allocation_method: Static
+        location: westus
