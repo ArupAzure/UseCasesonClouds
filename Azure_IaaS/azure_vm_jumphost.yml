@@ -1,13 +1,21 @@
 ---
-- name: Create Azure Public IP
+- name: Create Azure Public IP using Ansible Tower
   hosts: localhost
   connection: local
-  gather_facts: no
+  gather_facts: false
+  collections:
+    - azure.azcollection
+
+  vars:
+    resource_group: "1-b3c32a4e-playground-sandbox"
+    location: "West US"
+    public_ip_name: myPublicIP
 
   tasks:
     - name: Create Public IP address
       azure_rm_publicipaddress:
-        resource_group: 1-b3c32a4e-playground-sandbox
-        name: arupPublicIP
+        name: "{{ public_ip_name }}"
+        resource_group: "{{ resource_group }}"
+        location: "{{ location }}"
         allocation_method: Static
-        location: westus
+        sku: Standard
