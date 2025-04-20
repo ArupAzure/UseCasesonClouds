@@ -1,59 +1,66 @@
-- name: create Azure VM
+---
+- name: Create Azure VM Jumphost with password authentication
   hosts: localhost
   connection: local
-  vars_files: 
-#    - /home/ansible/secvar/azure_cred.yml
-   - extravars/ssh_keys.yml
+  gather_facts: false
 
-  tasks: 
-  - name: create resource groups
-    azure_rm_resourcegroup:
-      name: "{{ 1-b3c32a4e-playground-sandbox }}"
-      location: westeurope
-      tags:
-        testing: testing
+  vars:
+    resource_group: "1-b3c32a4e-playground-sandbox"
+    location: "eastus"
+    vm_name: "jumphost-vm"
+    admin_username: "azureuser"
+    admin_password: "P@ssword1234!"  # Must meet Azure complexity rules
+    vm_size: "Standard_B1s"
+    image:
+      offer: "UbuntuServer"
+      publisher: "Canonical"
+      sku: "18.04-LTS"
+      version: "latest"
 
-  - name: Create a virtual network
-    azure_rm_virtualnetwork:
-      name: firstnetwork
-      resource_group: "{{ 1-b3c32a4e-playground-sandbox }}"
-      address_prefixes_cidr:
-          - "10.1.0.0/16"
-          - "172.100.0.0/16"
-      dns_servers:
-          - "127.0.0.1"
-          - "127.0.0.2"
-      tags:
-          testing: testing
-          delete: on-exit
+  tasks:
+    - name: Create virtual network
+      azure_rm_virtualnetwork:
+        name: "jumphostVNet"
+        resource_group: "{{ resource_group }}"
+        address_prefixes: "10.0.0.0/16"
+        location: "{{ location }}"
 
-  - name: Create a subnet
-    azure_rm_subnet:
-      name: firstsubnet
-      virtual_network_name: firstnetwork
-      resource_group: "{{ 1-b3c32a4e-playground-sandbox }}"
-      address_prefix_cidr: "10.1.0.0/24"
-      state: present
-  
-  - name: setup first jumphost
-    azure_rm_virtualmachine:
-      resource_group: "{{ 1-b3c32a4e-playground-sandbox }}"
-      name: jumphost
-      vm_size: Standard_A2
-      admin_username: ansible
-      ssh_password_enabled: false
-      ssh_public_keys: 
-      - path: /home/ansible/.ssh/authorized_keys
-        key_data: "{{ automata_ansible_sshkey }}"
-      - path: /home/ansible/.ssh/authorized_keys
-        key_data: "{{ automata_kvegh_sshkey }}"
-      image:
-        publisher: RedHat
-        offer: rhel-byos
-        sku: rhel-lvm8
-        version: latest
-      plan:
-        product: rhel-byos
-        publisher: redhat
-        name: rhel-lvm8
+    - name: Create subnet
+      azure_rm_subnet:
+        name: "jumphostSubnet"
+        resource_group: "{{ resource_group }}"
+        virtual_network: "jumphostVNet"
+        address_prefix: "10.0.1.0/24"
 
+    - name: Create public IP address
+      azure_rm_publicipaddress:
+        name: "jumphostPublicIP"
+        resource_group: "{{ resource_group }}"
+        allocation_method: "Dynamic"
+        location: "{{ location }}"
+
+    - name: Create network interface
+      azure_rm_networkinterface:
+        name: "jumphostNIC"
+        resource_group: "{{ resource_group }}"
+        location: "{{ location }}"
+        ip_configurations:
+          - name: "ipconfig1"
+            subnet: "jumphostSubnet"
+            virtual_network: "jumphostVNet"
+            public_ip_address_name: "jumphostPublicIP"
+
+    - name: Create the virtual machine
+      azure_rm_virtualmachine:
+        name: "{{ vm_name }}"
+        resource_group: "{{ resource_group }}"
+        vm_size: "{{ vm_size }}"
+        admin_username: "{{ admin_username }}"
+        admin_password: "{{ admin_password }}"
+        network_interfaces: "jumphostNIC"
+        image:
+          offer: "{{ image.offer }}"
+          publisher: "{{ image.publisher }}"
+          sku: "{{ image.sku }}"
+          version: "{{ image.version }}"
+        location: "{{ location }}"
